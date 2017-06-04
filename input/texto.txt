@@ -1,0 +1,164 @@
+Simply put, a stream is nothing but an EventEmitter and implements some specials methods. Depending on the methods implemented, a stream becomes Readable, Writable, or Duplex (both readable and writable). Readable streams let you read data from a source while writable streams let you write data to a destination.
+
+
+Streams are collections of data — just like arrays or strings. The difference is that streams might not be available all at once, and they don’t have to fit in memory. This makes streams really powerful when working with large amounts of data, or data that’s coming from an external source one chunk at a time.
+However, streams are not only about working with big data. They also give us the power of composability in our code. Just like we can compose powerful linux commands by piping other smaller Linux commands, we can do exactly the same in Node with streams.
+
+
+Readable streams
+A readable stream lets you read data from a source. The source can be anything. It can be a simple file on your file system, a buffer in memory or even another stream. As streams are EventEmitters, they emit several events at various points. We will use these events to work with the streams.
+
+There are several examples of readable stream implementations in the Node.js and outside of it.
+
+Here are some of them:
+
+- The contents of a file
+- An server HTTP request body
+- A server TCP connection
+- A client TCP connection
+- An client HTTP response body
+- The changes on a database
+- A video stream
+- An audio stream
+- The results of a database query
+- and many more...
+
+The best way to read data from a stream is to listen to data event and attach a callback. When a chunk of data is available, the readable stream emits a data event and your callback executes.
+
+- 01_readableStreams.js
+
+There is also another way to read from stream. You just need to call read() on the stream instance repeatedly until every chunk of data has been read.
+
+- 02_readableStreams_read.js
+
+Piping
+Piping is a great mechanism in which you can read data from the source and write to destination without managing the flow yourself.
+
+- 03_piping.js
+
+Chaining
+Assume that you have an archive and want to decompress it. There are a number of ways to achieve this. But the easiest and cleanest way is to use piping and chaining.
+
+- 04_chaining.js
+
+
+Writable Streams
+To write data to a writable stream you need to call write() on the stream instance. 
+
+- 05_writableStreams.js
+
+Some examples of writable streams in Node are:
+
+- a writable file in append mode
+- a TCP connection
+- the process standard output stream
+- a server HTTP response body
+- a database bucket (or table)
+- an HTML parser
+- a remote logger
+- ... and many more
+
+
+
+End of Data
+When you don’t have more data to write you can simply call end() to notify the stream that you have finished writing. Assuming res is an HTTP response object, you often do the following to send the response to browser:
+
+- 06_endData.js (1)
+
+When end() is called and every chunk of data has been flushed, a finish event is emitted by the stream. Just note that you can’t write to the stream after calling end(). For example, the following will result in an error.
+
+- 06_endData.js (2)
+
+res.write('Some Data!!');
+res.end();
+res.write('Trying to write again'); //Error!
+Here are some important events related to writable streams:
+
+Readable.pause() – This method pauses the stream. If the stream is already flowing, it won’t emit data events anymore. The data will be kept in buffer. If you call this on a static (non-flowing) stream, the stream starts flowing, but data events won’t be emitted.
+Readable.resume() – Resumes a paused stream.
+readable.unpipe() – This removes destination streams from pipe destinations. If an argument is passed, it stops the readable stream from piping into the particular destination stream. Otherwise, all the destination streams are removed.
+
+
+Transformation
+With the data exposed once a stream is opened, developers can transform the data that comes from the stream before it reaches its destination, such as by transforming all lowercase characters in a file to uppercase characters.
+
+This is one of the greatest powers of streams. Once a stream is opened and you can read the data piece by piece, you can slot different programs in between. The figure below illustrates this process.
+
+Streams are good not only for transferring data but also for modifying it.
+https://blog-assets.risingstack.com/2017/04/Streams-are-good-not-only-for-transferring-data-but-also-for-modifying-it.jpg
+
+
+
+
+Readable
+There is a simple way to implement readable streams. We can just directly push the data that we want the consumers to consume.
+- 07_Readable.js
+When we push a null object, that means we want to signal that the stream does not have any more data.
+To consume this simple readable stream, we can simply pipe it into the writable stream process.stdout.
+
+
+
+We’re basically pushing all the data in the stream before piping it to process.stdout. The much better way is to push data on demand, when a consumer asks for it. We can do that by implementing the read() method in a readable stream configuration:
+When the read method is called on a readable stream, the implementation can push partial data to the queue. For example, we can push one letter at a time, starting with character code 65 (which represents A), and incrementing that on every push:
+
+- 08_readable.js
+
+
+
+Duplex
+With Duplex streams, we can implement both readable and writable streams with the same object. It’s as if we inherit from both interfaces.
+
+- 09_duplex.js
+
+
+
+A transform stream is the more interesting duplex stream because its output is computed from its input.
+For a transform stream, we don’t have to implement the read or write methods, we only need to implement a transform method, which combines both of them. It has the signature of the write method and we can use it to push data as well.
+
+- 10_transform.js
+
+Using file streams:
+
+- 11_transform.js
+
+
+Object Mode
+By default, streams expect Buffer/String values. There is an objectMode flag that we can set to have the stream accept any JavaScript object.
+
+
+
+
+
+Node’s built-in transform streams
+Node has a few very useful built-in transform streams. Namely, the zlib and crypto streams.
+
+- 14_nodeBuiltInLibs.js
+- 15_progressBar.js
+
+
+- 90
+- 91
+- 92
+
+https://www.sitepoint.com/basics-node-js-streams/
+https://www.desarrolloweb.com/articulos/streams-nodejs.html
+https://community.risingstack.com/the-definitive-guide-to-object-streams-in-node-js/
+https://medium.freecodecamp.com/node-js-streams-everything-you-need-to-know-c9141306be93
+
+
+
+
+There are two ways of consuming streams:
+- Pipes
+- Events
+
+Don't mix.
+
+Events:
+# readable.pipe(writable)
+readable.on('data', (chunk) => {
+  writable.write(chunk);
+});
+readable.on('end', () => {
+  writable.end();
+});
