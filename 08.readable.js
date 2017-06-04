@@ -1,3 +1,5 @@
+const { Readable } = require('stream');
+
 const inStream = new Readable({
   read(size) {
     this.push(String.fromCharCode(this.currentCharCode++));
@@ -6,5 +8,5 @@ const inStream = new Readable({
     }
   }
 });
-inStream.currentCharCode = 65;
+inStream.currentCharCode = 65; // A
 inStream.pipe(process.stdout);

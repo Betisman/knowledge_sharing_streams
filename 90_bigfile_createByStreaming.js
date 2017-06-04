@@ -1,6 +1,6 @@
 const { Readable } = require('stream')
 const fs = require('fs');
-const file = fs.createWriteStream('./big.file');
+const file = fs.createWriteStream('./output/big.file');
 
 file.on('data', () => process.stdout.write('.'))
   .on('close', () => process.stdout.write('Done'));
