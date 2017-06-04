@@ -24,8 +24,8 @@ Here are some of them:
 - The contents of a file
 - An server HTTP request body
 - A server TCP connection
+- A client HTTP response body
 - A client TCP connection
-- An client HTTP response body
 - The changes on a database
 - A video stream
 - An audio stream
@@ -169,10 +169,37 @@ fs.createReadStream('input/05.txt.gz')
   .pipe(fs.createWriteStream('output/05.txt'));
 ```
 
+## Duplex Streams
+With Duplex streams, we can implement both readable and writable streams with the same object. It’s as if we inherit from both interfaces.
 
+- 09_duplex.js
+```
+const { Duplex } = require('stream');
+
+const inoutStream = new Duplex({
+  write(chunk, encoding, callback) {
+    console.log(chunk.toString());
+    callback();
+  },
+
+  read(size) {
+    this.push(String.fromCharCode(this.currentCharCode++));
+    if (this.currentCharCode > 90) {
+      this.push(null);
+    }
+  }
+});
+
+inoutStream.currentCharCode = 65;
+process.stdin.pipe(inoutStream).pipe(process.stdout);
+```
 
 
 ## Transformation
+A transform stream is the more interesting duplex stream because its output is computed from its input.
+
+For a transform stream, we don’t have to implement the read or write methods, we only need to implement a transform method, which combines both of them. It has the signature of the write method and we can use it to push data as well.
+
 With the data exposed once a stream is opened, this data that comes from the stream can be transformed before it reaches its destination.
 
 An example is transforming all lowercase characters in a file to uppercase characters.
@@ -215,71 +242,7 @@ readableStream.pipe(toUpperStream).pipe(writableStream);
 ```
 
 
-## Custom Duplex Streams
-With Duplex streams, we can implement both readable and writable streams with the same object. It’s as if we inherit from both interfaces.
 
-- 09_duplex.js
-```
-const { Duplex } = require('stream');
-
-const inoutStream = new Duplex({
-  write(chunk, encoding, callback) {
-    console.log(chunk.toString());
-    callback();
-  },
-
-  read(size) {
-    this.push(String.fromCharCode(this.currentCharCode++));
-    if (this.currentCharCode > 90) {
-      this.push(null);
-    }
-  }
-});
-
-inoutStream.currentCharCode = 65;
-process.stdin.pipe(inoutStream).pipe(process.stdout);
-```
-
-
-## Transform streams
-A transform stream is the more interesting duplex stream because its output is computed from its input.
-
-For a transform stream, we don’t have to implement the read or write methods, we only need to implement a transform method, which combines both of them. It has the signature of the write method and we can use it to push data as well.
-
-- 10_transform.js
-```
-const { Transform } = require('stream');
-
-const upperCaseTr = new Transform({
-  transform(chunk, encoding, callback) {
-    this.push(chunk.toString().toUpperCase());
-    callback();
-  }
-});
-
-process.stdin.pipe(upperCaseTr).pipe(process.stdout);
-```
-
-Using file streams:
-
-- 11_transform.js
-``` 
-const fs = require('fs');
-const readableStream = fs.createReadStream('input/00file.txt');
-const writableStream = fs.createWriteStream('output/11.txt');
-const { Transform } = require('stream');
-
-const toUpperStream = new Transform({
-	transform(chunk, encoding, cb) {
-		this.push(chunk.toString().toUpperCase());
-		cb();
-	}
-});
-
-readableStream.setEncoding('utf8');
-
-readableStream.pipe(toUpperStream).pipe(writableStream);
-```
 
 
 ## Object Mode
