@@ -336,7 +336,7 @@ server.listen(8000);
 ![Screenshot](./imgs/bigFile02.png "Memory consumed when using streams to serve big files")
 
 
-In the first chunk of code, the process has to store in memory the whole file in order to serve it. In the second, this does not happen this way, as the stream make the memory to be filled by small chunks of data instead the whole file. So, using streams we can move and transform large amount of data without impacting the memory.
+In the first chunk of code, the process has to store the whole file in memory in order to serve it. In the second, this does not happen this way, as the stream make the memory to be filled by small chunks of data instead the whole file. So, using streams we can move and transform large amount of data without impacting the memory.
 
 ## Referral links
 - [NodeJS official Streams API](https://nodejs.org/api/stream.html)
